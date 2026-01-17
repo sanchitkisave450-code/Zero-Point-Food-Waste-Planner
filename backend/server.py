@@ -525,6 +525,8 @@ async def get_expiring_today():
         if days_to_expire is not None and days_to_expire == 0:
             item['days_to_expire'] = days_to_expire
             item['urgency'] = urgency
+            # Remove MongoDB _id field
+            item.pop('_id', None)
             expiring_today.append(InventoryItem(**item))
     
     return expiring_today
