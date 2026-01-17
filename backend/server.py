@@ -514,7 +514,7 @@ async def get_recipe_suggestions(max_results: int = 5):
 
 
 # Dashboard Routes
-@api_router.get("/dashboard/expiring-today")
+@api_router.get("/dashboard/expiring-today", response_model=List[InventoryItem])
 async def get_expiring_today():
     """Get items expiring today"""
     items = await db.inventory.find().to_list(1000)
@@ -525,7 +525,7 @@ async def get_expiring_today():
         if days_to_expire is not None and days_to_expire == 0:
             item['days_to_expire'] = days_to_expire
             item['urgency'] = urgency
-            expiring_today.append(item)
+            expiring_today.append(InventoryItem(**item))
     
     return expiring_today
 
