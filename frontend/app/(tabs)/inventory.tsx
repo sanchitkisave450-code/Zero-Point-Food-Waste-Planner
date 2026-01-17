@@ -12,7 +12,7 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useInventory } from '../contexts/InventoryContext';
+import { useInventory } from '../../contexts/InventoryContext';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 export default function InventoryScreen() {
