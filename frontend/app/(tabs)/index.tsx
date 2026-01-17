@@ -6,14 +6,17 @@ import {
   ScrollView,
   TouchableOpacity,
   RefreshControl,
-  Alert,
+  Dimensions,
+  Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useInventory } from '../../contexts/InventoryContext';
 import { useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import axios from 'axios';
 
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
+const { width } = Dimensions.get('window');
 
 export default function HomeScreen() {
   const { inventory, loading, refreshInventory } = useInventory();
@@ -21,9 +24,15 @@ export default function HomeScreen() {
   const [expiringToday, setExpiringToday] = useState<any[]>([]);
   const [expiringWeek, setExpiringWeek] = useState<any[]>([]);
   const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [fadeAnim] = useState(new Animated.Value(0));
 
   useEffect(() => {
     loadDashboardData();
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 800,
+      useNativeDriver: true,
+    }).start();
   }, [inventory]);
 
   const loadDashboardData = async () => {
@@ -46,224 +55,393 @@ export default function HomeScreen() {
     switch (urgency) {
       case 'critical':
       case 'expired':
-        return '#f44336';
+        return '#FF3B30';
       case 'warning':
-        return '#ff9800';
+        return '#FF9500';
       case 'safe':
-        return '#4CAF50';
+        return '#34C759';
       default:
-        return '#999';
+        return '#8E8E93';
     }
   };
 
-  const renderInventoryItem = (item: any) => (
-    <View key={item.id} style={styles.itemCard}>
-      <View style={[styles.urgencyBadge, { backgroundColor: getUrgencyColor(item.urgency) }]} />
+  const renderInventoryItem = (item: any, index: number) => (
+    <Animated.View
+      key={item.id}
+      style={[
+        styles.itemCard,
+        {
+          opacity: fadeAnim,
+          transform: [
+            {
+              translateX: fadeAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [50, 0],
+              }),
+            },
+          ],
+        },
+      ]}
+    >
+      <View style={[styles.urgencyIndicator, { backgroundColor: getUrgencyColor(item.urgency) }]} />
       <View style={styles.itemContent}>
-        <Text style={styles.itemName}>{item.name}</Text>
-        <Text style={styles.itemDetails}>
-          {item.quantity} {item.unit} • {item.category}
-        </Text>
+        <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>
+        <View style={styles.itemMeta}>
+          <View style={styles.metaChip}>
+            <Ionicons name="cube-outline" size={12} color="#8E8E93" />
+            <Text style={styles.metaText}>{item.quantity} {item.unit}</Text>
+          </View>
+          <View style={styles.metaChip}>
+            <Ionicons name="location-outline" size={12} color="#8E8E93" />
+            <Text style={styles.metaText}>{item.category}</Text>
+          </View>
+        </View>
         {item.days_to_expire !== null && (
-          <Text style={styles.expiryText}>
-            {item.days_to_expire === 0
-              ? 'Expires today!'
-              : item.days_to_expire < 0
-              ? `Expired ${Math.abs(item.days_to_expire)} days ago`
-              : `${item.days_to_expire} days left`}
-          </Text>
+          <View style={[styles.expiryBadge, { backgroundColor: getUrgencyColor(item.urgency) + '15' }]}>
+            <Ionicons name="time-outline" size={14} color={getUrgencyColor(item.urgency)} />
+            <Text style={[styles.expiryText, { color: getUrgencyColor(item.urgency) }]}>
+              {item.days_to_expire === 0
+                ? 'Expires today!'
+                : item.days_to_expire < 0
+                ? `Expired ${Math.abs(item.days_to_expire)}d ago`
+                : `${item.days_to_expire}d left`}
+            </Text>
+          </View>
         )}
       </View>
-      <Ionicons name="chevron-forward" size={20} color="#999" />
-    </View>
+      <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+    </Animated.View>
   );
 
-  const renderRecipeSuggestion = (recipe: any) => (
-    <View key={recipe.id} style={styles.recipeCard}>
-      <View style={styles.recipeHeader}>
-        <Ionicons name="restaurant" size={24} color="#4CAF50" />
-        <View style={styles.recipeInfo}>
-          <Text style={styles.recipeName}>{recipe.name}</Text>
-          <Text style={styles.recipeDetails}>
-            {recipe.cooking_time} min • {recipe.difficulty}
-          </Text>
-        </View>
+  const renderRecipeSuggestion = (recipe: any, index: number) => (
+    <TouchableOpacity
+      key={recipe.id}
+      style={styles.recipeCard}
+      activeOpacity={0.7}
+      onPress={() => router.push('/recipes')}
+    >
+      <View style={styles.recipeIconContainer}>
+        <Ionicons name="restaurant" size={24} color="#FFFFFF" />
       </View>
-      {recipe.waste_prevented > 0 && (
-        <View style={styles.wasteBadge}>
-          <Ionicons name="leaf" size={16} color="#4CAF50" />
-          <Text style={styles.wasteText}>Prevents {recipe.waste_prevented} items from waste</Text>
+      <View style={styles.recipeContent}>
+        <Text style={styles.recipeName} numberOfLines={1}>{recipe.name}</Text>
+        <View style={styles.recipeStats}>
+          <View style={styles.recipeStat}>
+            <Ionicons name="time-outline" size={14} color="#8E8E93" />
+            <Text style={styles.recipeStatText}>{recipe.cooking_time}min</Text>
+          </View>
+          <View style={styles.recipeStat}>
+            <Ionicons name="checkmark-circle" size={14} color="#34C759" />
+            <Text style={styles.recipeStatText}>{recipe.available_ingredients.length} available</Text>
+          </View>
         </View>
-      )}
-      <Text style={styles.ingredientsText}>
-        ✓ {recipe.available_ingredients.length} available • ✗ {recipe.missing_ingredients.length} missing
-      </Text>
-    </View>
+        {recipe.waste_prevented > 0 && (
+          <View style={styles.wastePreventBadge}>
+            <Ionicons name="leaf" size={12} color="#34C759" />
+            <Text style={styles.wastePreventText}>Prevents {recipe.waste_prevented} waste</Text>
+          </View>
+        )}
+      </View>
+    </TouchableOpacity>
   );
+
+  const totalItems = inventory.length;
+  const urgentItems = expiringToday.length + expiringWeek.length;
 
   return (
-    <ScrollView
-      style={styles.container}
-      refreshControl={<RefreshControl refreshing={loading} onRefresh={refreshInventory} />}
-    >
-      <View style={styles.header}>
-        <Text style={styles.title}>Zero-Point Dashboard</Text>
-        <Text style={styles.subtitle}>Reducing food waste, one meal at a time</Text>
-      </View>
-
-      {/* Quick Actions */}
-      <View style={styles.quickActions}>
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={() => router.push('/scan')}
-        >
-          <Ionicons name="qr-code" size={24} color="#fff" />
-          <Text style={styles.actionText}>Scan</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={() => router.push('/inventory')}
-        >
-          <Ionicons name="add-circle" size={24} color="#fff" />
-          <Text style={styles.actionText}>Add Item</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={() => router.push('/recipes')}
-        >
-          <Ionicons name="restaurant" size={24} color="#fff" />
-          <Text style={styles.actionText}>Recipes</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Use Today Section */}
-      {expiringToday.length > 0 && (
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Ionicons name="warning" size={24} color="#f44336" />
-            <Text style={styles.sectionTitle}>Use Today ({expiringToday.length})</Text>
+    <View style={styles.container}>
+      {/* Hero Header with Gradient */}
+      <LinearGradient
+        colors={['#34C759', '#30D158', '#32D74B']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.heroHeader}
+      >
+        <View style={styles.heroContent}>
+          <View>
+            <Text style={styles.greeting}>Good day! 👋</Text>
+            <Text style={styles.heroTitle}>Zero Waste Dashboard</Text>
           </View>
-          <View style={styles.sectionContent}>
-            {expiringToday.map(renderInventoryItem)}
+          <View style={styles.statsContainer}>
+            <View style={styles.statBox}>
+              <Text style={styles.statNumber}>{totalItems}</Text>
+              <Text style={styles.statLabel}>Items</Text>
+            </View>
+            <View style={[styles.statBox, { marginLeft: 12 }]}>
+              <Text style={[styles.statNumber, urgentItems > 0 && { color: '#FF3B30' }]}>{urgentItems}</Text>
+              <Text style={styles.statLabel}>Urgent</Text>
+            </View>
           </View>
         </View>
-      )}
+      </LinearGradient>
 
-      {/* Use This Week Section */}
-      {expiringWeek.length > 0 && (
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Ionicons name="time" size={24} color="#ff9800" />
-            <Text style={styles.sectionTitle}>Use This Week ({expiringWeek.length})</Text>
-          </View>
-          <View style={styles.sectionContent}>
-            {expiringWeek.slice(0, 5).map(renderInventoryItem)}
-            {expiringWeek.length > 5 && (
-              <TouchableOpacity
-                style={styles.viewMoreButton}
-                onPress={() => router.push('/inventory')}
-              >
-                <Text style={styles.viewMoreText}>View all {expiringWeek.length} items</Text>
-              </TouchableOpacity>
-            )}
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={loading} onRefresh={refreshInventory} tintColor="#34C759" />}
+      >
+        {/* Quick Actions */}
+        <View style={styles.quickActionsSection}>
+          <Text style={styles.sectionTitle}>Quick Actions</Text>
+          <View style={styles.quickActionsGrid}>
+            <TouchableOpacity
+              style={[styles.actionCard, { backgroundColor: '#007AFF' }]}
+              activeOpacity={0.8}
+              onPress={() => router.push('/scan')}
+            >
+              <View style={styles.actionIconContainer}>
+                <Ionicons name="scan" size={28} color="#FFFFFF" />
+              </View>
+              <Text style={styles.actionTitle}>Scan</Text>
+              <Text style={styles.actionSubtitle}>Barcode</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.actionCard, { backgroundColor: '#5856D6' }]}
+              activeOpacity={0.8}
+              onPress={() => router.push('/inventory')}
+            >
+              <View style={styles.actionIconContainer}>
+                <Ionicons name="add-circle" size={28} color="#FFFFFF" />
+              </View>
+              <Text style={styles.actionTitle}>Add</Text>
+              <Text style={styles.actionSubtitle}>Manual</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.actionCard, { backgroundColor: '#FF9500' }]}
+              activeOpacity={0.8}
+              onPress={() => router.push('/recipes')}
+            >
+              <View style={styles.actionIconContainer}>
+                <Ionicons name="restaurant" size={28} color="#FFFFFF" />
+              </View>
+              <Text style={styles.actionTitle}>Cook</Text>
+              <Text style={styles.actionSubtitle}>Recipes</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.actionCard, { backgroundColor: '#FF2D55' }]}
+              activeOpacity={0.8}
+              onPress={() => router.push('/shopping')}
+            >
+              <View style={styles.actionIconContainer}>
+                <Ionicons name="cart" size={28} color="#FFFFFF" />
+              </View>
+              <Text style={styles.actionTitle}>Shop</Text>
+              <Text style={styles.actionSubtitle}>List</Text>
+            </TouchableOpacity>
           </View>
         </View>
-      )}
 
-      {/* Recipe Suggestions */}
-      {suggestions.length > 0 && (
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Ionicons name="bulb" size={24} color="#4CAF50" />
-            <Text style={styles.sectionTitle}>Smart Suggestions</Text>
+        {/* Urgent Items */}
+        {expiringToday.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <View style={styles.sectionTitleContainer}>
+                <View style={styles.urgentBadge}>
+                  <Ionicons name="warning" size={18} color="#FF3B30" />
+                </View>
+                <Text style={styles.sectionTitle}>Use Today</Text>
+              </View>
+              <Text style={styles.sectionCount}>{expiringToday.length}</Text>
+            </View>
+            <View style={styles.itemsContainer}>
+              {expiringToday.map((item, index) => renderInventoryItem(item, index))}
+            </View>
           </View>
-          <View style={styles.sectionContent}>
-            {suggestions.map(renderRecipeSuggestion)}
-          </View>
-          <TouchableOpacity
-            style={styles.viewMoreButton}
-            onPress={() => router.push('/recipes')}
-          >
-            <Text style={styles.viewMoreText}>View all recipes</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+        )}
 
-      {/* Empty State */}
-      {inventory.length === 0 && (
-        <View style={styles.emptyState}>
-          <Ionicons name="cube-outline" size={80} color="#ccc" />
-          <Text style={styles.emptyTitle}>No items in inventory</Text>
-          <Text style={styles.emptySubtitle}>Start by scanning a product or adding manually</Text>
-          <TouchableOpacity
-            style={styles.primaryButton}
-            onPress={() => router.push('/scan')}
-          >
-            <Text style={styles.primaryButtonText}>Scan Your First Item</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-    </ScrollView>
+        {/* This Week */}
+        {expiringWeek.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <View style={styles.sectionTitleContainer}>
+                <View style={[styles.urgentBadge, { backgroundColor: '#FF950020' }]}>
+                  <Ionicons name="time" size={18} color="#FF9500" />
+                </View>
+                <Text style={styles.sectionTitle}>This Week</Text>
+              </View>
+              <Text style={styles.sectionCount}>{expiringWeek.length}</Text>
+            </View>
+            <View style={styles.itemsContainer}>
+              {expiringWeek.slice(0, 5).map((item, index) => renderInventoryItem(item, index))}
+              {expiringWeek.length > 5 && (
+                <TouchableOpacity
+                  style={styles.viewMoreButton}
+                  onPress={() => router.push('/inventory')}
+                >
+                  <Text style={styles.viewMoreText}>View all {expiringWeek.length} items</Text>
+                  <Ionicons name="arrow-forward" size={16} color="#007AFF" />
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        )}
+
+        {/* Recipe Suggestions */}
+        {suggestions.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <View style={styles.sectionTitleContainer}>
+                <View style={[styles.urgentBadge, { backgroundColor: '#34C75920' }]}>
+                  <Ionicons name="bulb" size={18} color="#34C759" />
+                </View>
+                <Text style={styles.sectionTitle}>Smart Recipes</Text>
+              </View>
+            </View>
+            <View style={styles.recipesContainer}>
+              {suggestions.map((recipe, index) => renderRecipeSuggestion(recipe, index))}
+            </View>
+          </View>
+        )}
+
+        {/* Empty State */}
+        {inventory.length === 0 && (
+          <View style={styles.emptyState}>
+            <View style={styles.emptyIconContainer}>
+              <Ionicons name="cube-outline" size={80} color="#E5E5EA" />
+            </View>
+            <Text style={styles.emptyTitle}>Start Your Journey</Text>
+            <Text style={styles.emptySubtitle}>
+              Begin by scanning a product barcode{'
+'}or adding items manually
+            </Text>
+            <TouchableOpacity
+              style={styles.primaryButton}
+              onPress={() => router.push('/scan')}
+            >
+              <Ionicons name="scan" size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
+              <Text style={styles.primaryButtonText}>Scan First Item</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        <View style={{ height: 40 }} />
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#F2F2F7',
   },
-  header: {
-    backgroundColor: '#4CAF50',
-    padding: 24,
-    paddingTop: 48,
+  heroHeader: {
+    paddingTop: 60,
+    paddingBottom: 24,
+    paddingHorizontal: 20,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#fff',
+  heroContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  greeting: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    opacity: 0.9,
     marginBottom: 4,
   },
-  subtitle: {
-    fontSize: 14,
-    color: '#fff',
-    opacity: 0.9,
+  heroTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
-  quickActions: {
+  statsContainer: {
     flexDirection: 'row',
-    padding: 16,
-    gap: 12,
   },
-  actionButton: {
-    flex: 1,
-    backgroundColor: '#4CAF50',
-    padding: 16,
+  statBox: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderRadius: 12,
     alignItems: 'center',
-    gap: 8,
   },
-  actionText: {
-    color: '#fff',
-    fontSize: 12,
+  statNumber: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 2,
+  },
+  statLabel: {
+    fontSize: 11,
+    color: '#FFFFFF',
+    opacity: 0.9,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingTop: 16,
+  },
+  quickActionsSection: {
+    paddingHorizontal: 20,
+    marginBottom: 24,
+  },
+  quickActionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  actionCard: {
+    width: (width - 56) / 2,
+    padding: 20,
+    borderRadius: 16,
+    alignItems: 'center',
+  },
+  actionIconContainer: {
+    marginBottom: 12,
+  },
+  actionTitle: {
+    fontSize: 17,
     fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 2,
+  },
+  actionSubtitle: {
+    fontSize: 13,
+    color: '#FFFFFF',
+    opacity: 0.8,
   },
   section: {
-    margin: 16,
-    marginTop: 0,
+    marginBottom: 24,
+    paddingHorizontal: 20,
   },
   sectionHeader: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
+  },
+  sectionTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 8,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
+  urgentBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: '#FF3B3020',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  sectionContent: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#000000',
+  },
+  sectionCount: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#8E8E93',
+  },
+  itemsContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
     overflow: 'hidden',
   },
   itemCard: {
@@ -271,11 +449,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: '#F2F2F7',
   },
-  urgencyBadge: {
+  urgencyIndicator: {
     width: 4,
-    height: 40,
+    height: 48,
     borderRadius: 2,
     marginRight: 12,
   },
@@ -283,98 +461,142 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   itemName: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '600',
-    color: '#333',
-    marginBottom: 4,
+    color: '#000000',
+    marginBottom: 6,
   },
-  itemDetails: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 2,
+  itemMeta: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 6,
+  },
+  metaChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#F2F2F7',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  metaText: {
+    fontSize: 12,
+    color: '#8E8E93',
+  },
+  expiryBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    gap: 4,
   },
   expiryText: {
     fontSize: 12,
-    color: '#f44336',
-    fontWeight: '500',
+    fontWeight: '600',
   },
-  recipeCard: {
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  recipeHeader: {
+  viewMoreButton: {
     flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 8,
+    padding: 16,
+    gap: 6,
+  },
+  viewMoreText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#007AFF',
+  },
+  recipesContainer: {
     gap: 12,
   },
-  recipeInfo: {
+  recipeCard: {
+    flexDirection: 'row',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    alignItems: 'center',
+  },
+  recipeIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#34C759',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  recipeContent: {
     flex: 1,
   },
   recipeName: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '600',
-    color: '#333',
-    marginBottom: 2,
+    color: '#000000',
+    marginBottom: 6,
   },
-  recipeDetails: {
-    fontSize: 12,
-    color: '#666',
+  recipeStats: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 6,
   },
-  wasteBadge: {
+  recipeStat: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#e8f5e9',
-    padding: 8,
-    borderRadius: 8,
-    marginBottom: 8,
     gap: 4,
   },
-  wasteText: {
-    fontSize: 12,
-    color: '#4CAF50',
-    fontWeight: '500',
+  recipeStatText: {
+    fontSize: 13,
+    color: '#8E8E93',
   },
-  ingredientsText: {
-    fontSize: 14,
-    color: '#666',
-  },
-  viewMoreButton: {
-    padding: 16,
+  wastePreventBadge: {
+    flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#34C75915',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    gap: 4,
   },
-  viewMoreText: {
-    fontSize: 14,
-    color: '#4CAF50',
+  wastePreventText: {
+    fontSize: 11,
     fontWeight: '600',
+    color: '#34C759',
   },
   emptyState: {
     padding: 48,
     alignItems: 'center',
   },
+  emptyIconContainer: {
+    marginBottom: 24,
+  },
   emptyTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    marginTop: 16,
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#000000',
     marginBottom: 8,
   },
   emptySubtitle: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: 15,
+    color: '#8E8E93',
     textAlign: 'center',
-    marginBottom: 24,
+    lineHeight: 22,
+    marginBottom: 32,
   },
   primaryButton: {
-    backgroundColor: '#4CAF50',
+    flexDirection: 'row',
+    backgroundColor: '#34C759',
     paddingHorizontal: 32,
     paddingVertical: 16,
-    borderRadius: 24,
+    borderRadius: 12,
+    alignItems: 'center',
   },
   primaryButtonText: {
-    color: '#fff',
-    fontSize: 16,
+    color: '#FFFFFF',
+    fontSize: 17,
     fontWeight: '600',
   },
 });
