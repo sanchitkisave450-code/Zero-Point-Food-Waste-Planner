@@ -1,219 +1,238 @@
+diff --git a/frontend/app/(tabs)/index.tsx b/frontend/app/(tabs)/index.tsx
+index fb630ce..e02ae7d 100644
+--- a/frontend/app/(tabs)/index.tsx
++++ b/frontend/app/(tabs)/index.tsx
+@@ -305,8 +305,7 @@ export default function HomeScreen() {
+             </View>
+             <Text style={styles.emptyTitle}>Start Your Journey</Text>
+             <Text style={styles.emptySubtitle}>
+-              Begin by scanning a product barcode{'
+-'}or adding items manually
++              Begin by scanning a product barcode{'\n'}or adding items manually
+             </Text>
+             <TouchableOpacity
+               style={styles.primaryButton}
 diff --git a/model.patch b/model.patch
-index 23fee00..e69de29 100644
+index 961c7e5..e69de29 100644
 --- a/model.patch
 +++ b/model.patch
-@@ -1,214 +0,0 @@
+@@ -1,219 +0,0 @@
 -diff --git a/model.patch b/model.patch
--index 0c67547..e69de29 100644
+-index 23fee00..e69de29 100644
 ---- a/model.patch
 -+++ b/model.patch
--@@ -1,209 +0,0 @@
---diff --git a/backend/server.py b/backend/server.py
---index 2c01bde..ae2be3a 100644
------ a/backend/server.py
---+++ b/backend/server.py
---@@ -525,6 +525,8 @@ async def get_expiring_today():
---         if days_to_expire is not None and days_to_expire == 0:
---             item['days_to_expire'] = days_to_expire
---             item['urgency'] = urgency
---+            # Remove MongoDB _id field
---+            item.pop('_id', None)
---             expiring_today.append(InventoryItem(**item))
---     
---     return expiring_today
---@@ -541,6 +543,8 @@ async def get_expiring_week():
---         if days_to_expire is not None and 1 <= days_to_expire <= 7:
---             item['days_to_expire'] = days_to_expire
---             item['urgency'] = urgency
---+            # Remove MongoDB _id field
---+            item.pop('_id', None)
---             expiring_week.append(item)
---     
---     return expiring_week
+-@@ -1,214 +0,0 @@
 --diff --git a/model.patch b/model.patch
---index 5db93dc..e69de29 100644
+--index 0c67547..e69de29 100644
 ----- a/model.patch
 --+++ b/model.patch
---@@ -1,182 +0,0 @@
+--@@ -1,209 +0,0 @@
 ---diff --git a/backend/server.py b/backend/server.py
----index 5b9fddb..2c01bde 100644
+---index 2c01bde..ae2be3a 100644
 ------ a/backend/server.py
 ---+++ b/backend/server.py
----@@ -514,7 +514,7 @@ async def get_recipe_suggestions(max_results: int = 5):
---- 
---- 
---- # Dashboard Routes
-----@api_router.get("/dashboard/expiring-today")
----+@api_router.get("/dashboard/expiring-today", response_model=List[InventoryItem])
---- async def get_expiring_today():
----     """Get items expiring today"""
----     items = await db.inventory.find().to_list(1000)
----@@ -525,7 +525,7 @@ async def get_expiring_today():
+---@@ -525,6 +525,8 @@ async def get_expiring_today():
 ---         if days_to_expire is not None and days_to_expire == 0:
 ---             item['days_to_expire'] = days_to_expire
 ---             item['urgency'] = urgency
-----            expiring_today.append(item)
----+            expiring_today.append(InventoryItem(**item))
+---+            # Remove MongoDB _id field
+---+            item.pop('_id', None)
+---             expiring_today.append(InventoryItem(**item))
 ---     
 ---     return expiring_today
---- 
----diff --git a/focused_test.py b/focused_test.py
----new file mode 100644
----index 0000000..48e43f7
------- /dev/null
----+++ b/focused_test.py
----@@ -0,0 +1,153 @@
----+#!/usr/bin/env python3
----+"""
----+Focused Backend API Testing for specific issues
----+"""
----+
----+import requests
----+import json
----+from datetime import datetime, timedelta
----+
----+BACKEND_URL = "https://expiwise.preview.emergentagent.com/api"
----+
----+def test_dashboard_endpoints():
----+    """Test dashboard endpoints specifically"""
----+    print("=== Testing Dashboard Endpoints ===")
----+    
----+    # First add some test data with specific expiry dates
----+    test_items = [
----+        {
----+            "name": "Expiring Today Item",
----+            "category": "Fridge",
----+            "quantity": "1",
----+            "unit": "piece",
----+            "expiry_date": datetime.now().isoformat()
----+        },
----+        {
----+            "name": "Expiring This Week Item", 
----+            "category": "Pantry",
----+            "quantity": "1",
----+            "unit": "piece",
----+            "expiry_date": (datetime.now() + timedelta(days=3)).isoformat()
----+        }
----+    ]
----+    
----+    created_ids = []
----+    
----+    # Create test items
----+    for item in test_items:
----+        try:
----+            response = requests.post(f"{BACKEND_URL}/inventory", json=item, timeout=10)
----+            if response.status_code == 200:
----+                data = response.json()
----+                created_ids.append(data['id'])
----+                print(f"✅ Created test item: {item['name']}")
----+            else:
----+                print(f"❌ Failed to create {item['name']}: {response.status_code}")
----+        except Exception as e:
----+            print(f"❌ Error creating {item['name']}: {e}")
----+    
----+    # Test dashboard endpoints
----+    try:
----+        response = requests.get(f"{BACKEND_URL}/dashboard/expiring-today", timeout=10)
----+        print(f"Dashboard expiring-today status: {response.status_code}")
----+        if response.status_code == 200:
----+            data = response.json()
----+            print(f"✅ Expiring today: {len(data)} items")
----+        else:
----+            print(f"❌ Error: {response.text}")
----+    except Exception as e:
----+        print(f"❌ Dashboard expiring-today error: {e}")
----+    
----+    try:
----+        response = requests.get(f"{BACKEND_URL}/dashboard/expiring-week", timeout=10)
----+        print(f"Dashboard expiring-week status: {response.status_code}")
----+        if response.status_code == 200:
----+            data = response.json()
----+            print(f"✅ Expiring this week: {len(data)} items")
----+        else:
----+            print(f"❌ Error: {response.text}")
----+    except Exception as e:
----+        print(f"❌ Dashboard expiring-week error: {e}")
----+    
----+    # Cleanup
----+    for item_id in created_ids:
----+        try:
----+            requests.delete(f"{BACKEND_URL}/inventory/{item_id}", timeout=5)
----+        except:
----+            pass
----+
----+def test_shopping_duplicate_detection():
----+    """Test shopping list duplicate detection"""
----+    print("\n=== Testing Shopping List Duplicate Detection ===")
----+    
----+    # First check what's in inventory
----+    try:
----+        response = requests.get(f"{BACKEND_URL}/inventory", timeout=10)
----+        if response.status_code == 200:
----+            inventory = response.json()
----+            print(f"Current inventory has {len(inventory)} items:")
----+            for item in inventory:
----+                print(f"  - {item['name']}")
----+        else:
----+            print(f"❌ Failed to get inventory: {response.status_code}")
----+            return
----+    except Exception as e:
----+        print(f"❌ Error getting inventory: {e}")
----+        return
----+    
----+    # Test adding an item that matches inventory
----+    if inventory:
----+        existing_item = inventory[0]
----+        shopping_item = {
----+            "name": existing_item['name'],  # Exact match
----+            "quantity": "2",
----+            "unit": "pieces",
----+            "priority": "must-buy"
----+        }
----+        
----+        try:
----+            response = requests.post(f"{BACKEND_URL}/shopping", json=shopping_item, timeout=10)
----+            if response.status_code == 200:
----+                data = response.json()
----+                print(f"Added shopping item: {data['name']}")
----+                print(f"Is duplicate: {data.get('is_duplicate', False)}")
----+                print(f"Notes: {data.get('notes', 'None')}")
----+                
----+                if data.get('is_duplicate'):
----+                    print("✅ Duplicate detection working")
----+                else:
----+                    print("❌ Duplicate detection failed")
----+                
----+                # Cleanup
----+                try:
----+                    requests.delete(f"{BACKEND_URL}/shopping/{data['id']}", timeout=5)
----+                except:
----+                    pass
----+            else:
----+                print(f"❌ Failed to add shopping item: {response.status_code}")
----+        except Exception as e:
----+            print(f"❌ Error adding shopping item: {e}")
----+
----+def test_barcode_invalid():
----+    """Test barcode API with truly invalid barcode"""
----+    print("\n=== Testing Barcode API with Invalid Barcode ===")
----+    
----+    invalid_barcodes = ["999999999999", "123456789012", "000000000000"]
----+    
----+    for barcode in invalid_barcodes:
----+        try:
----+            response = requests.get(f"{BACKEND_URL}/barcode/{barcode}", timeout=15)
----+            if response.status_code == 200:
----+                data = response.json()
----+                print(f"Barcode {barcode}: found={data.get('found')}")
----+                if data.get('found'):
----+                    print(f"  Product: {data.get('product', {}).get('name', 'Unknown')}")
----+            else:
----+                print(f"❌ Barcode {barcode} failed: {response.status_code}")
----+        except Exception as e:
----+            print(f"❌ Error testing barcode {barcode}: {e}")
----+
----+if __name__ == "__main__":
----+    test_dashboard_endpoints()
----+    test_shopping_duplicate_detection()
----+    test_barcode_invalid()
----\ No newline at end of file
+---@@ -541,6 +543,8 @@ async def get_expiring_week():
+---         if days_to_expire is not None and 1 <= days_to_expire <= 7:
+---             item['days_to_expire'] = days_to_expire
+---             item['urgency'] = urgency
+---+            # Remove MongoDB _id field
+---+            item.pop('_id', None)
+---             expiring_week.append(item)
+---     
+---     return expiring_week
+---diff --git a/model.patch b/model.patch
+---index 5db93dc..e69de29 100644
+------ a/model.patch
+---+++ b/model.patch
+---@@ -1,182 +0,0 @@
+----diff --git a/backend/server.py b/backend/server.py
+----index 5b9fddb..2c01bde 100644
+------- a/backend/server.py
+----+++ b/backend/server.py
+----@@ -514,7 +514,7 @@ async def get_recipe_suggestions(max_results: int = 5):
+---- 
+---- 
+---- # Dashboard Routes
+-----@api_router.get("/dashboard/expiring-today")
+----+@api_router.get("/dashboard/expiring-today", response_model=List[InventoryItem])
+---- async def get_expiring_today():
+----     """Get items expiring today"""
+----     items = await db.inventory.find().to_list(1000)
+----@@ -525,7 +525,7 @@ async def get_expiring_today():
+----         if days_to_expire is not None and days_to_expire == 0:
+----             item['days_to_expire'] = days_to_expire
+----             item['urgency'] = urgency
+-----            expiring_today.append(item)
+----+            expiring_today.append(InventoryItem(**item))
+----     
+----     return expiring_today
+---- 
+----diff --git a/focused_test.py b/focused_test.py
+----new file mode 100644
+----index 0000000..48e43f7
+------- /dev/null
+----+++ b/focused_test.py
+----@@ -0,0 +1,153 @@
+----+#!/usr/bin/env python3
+----+"""
+----+Focused Backend API Testing for specific issues
+----+"""
+----+
+----+import requests
+----+import json
+----+from datetime import datetime, timedelta
+----+
+----+BACKEND_URL = "https://expiwise.preview.emergentagent.com/api"
+----+
+----+def test_dashboard_endpoints():
+----+    """Test dashboard endpoints specifically"""
+----+    print("=== Testing Dashboard Endpoints ===")
+----+    
+----+    # First add some test data with specific expiry dates
+----+    test_items = [
+----+        {
+----+            "name": "Expiring Today Item",
+----+            "category": "Fridge",
+----+            "quantity": "1",
+----+            "unit": "piece",
+----+            "expiry_date": datetime.now().isoformat()
+----+        },
+----+        {
+----+            "name": "Expiring This Week Item", 
+----+            "category": "Pantry",
+----+            "quantity": "1",
+----+            "unit": "piece",
+----+            "expiry_date": (datetime.now() + timedelta(days=3)).isoformat()
+----+        }
+----+    ]
+----+    
+----+    created_ids = []
+----+    
+----+    # Create test items
+----+    for item in test_items:
+----+        try:
+----+            response = requests.post(f"{BACKEND_URL}/inventory", json=item, timeout=10)
+----+            if response.status_code == 200:
+----+                data = response.json()
+----+                created_ids.append(data['id'])
+----+                print(f"✅ Created test item: {item['name']}")
+----+            else:
+----+                print(f"❌ Failed to create {item['name']}: {response.status_code}")
+----+        except Exception as e:
+----+            print(f"❌ Error creating {item['name']}: {e}")
+----+    
+----+    # Test dashboard endpoints
+----+    try:
+----+        response = requests.get(f"{BACKEND_URL}/dashboard/expiring-today", timeout=10)
+----+        print(f"Dashboard expiring-today status: {response.status_code}")
+----+        if response.status_code == 200:
+----+            data = response.json()
+----+            print(f"✅ Expiring today: {len(data)} items")
+----+        else:
+----+            print(f"❌ Error: {response.text}")
+----+    except Exception as e:
+----+        print(f"❌ Dashboard expiring-today error: {e}")
+----+    
+----+    try:
+----+        response = requests.get(f"{BACKEND_URL}/dashboard/expiring-week", timeout=10)
+----+        print(f"Dashboard expiring-week status: {response.status_code}")
+----+        if response.status_code == 200:
+----+            data = response.json()
+----+            print(f"✅ Expiring this week: {len(data)} items")
+----+        else:
+----+            print(f"❌ Error: {response.text}")
+----+    except Exception as e:
+----+        print(f"❌ Dashboard expiring-week error: {e}")
+----+    
+----+    # Cleanup
+----+    for item_id in created_ids:
+----+        try:
+----+            requests.delete(f"{BACKEND_URL}/inventory/{item_id}", timeout=5)
+----+        except:
+----+            pass
+----+
+----+def test_shopping_duplicate_detection():
+----+    """Test shopping list duplicate detection"""
+----+    print("\n=== Testing Shopping List Duplicate Detection ===")
+----+    
+----+    # First check what's in inventory
+----+    try:
+----+        response = requests.get(f"{BACKEND_URL}/inventory", timeout=10)
+----+        if response.status_code == 200:
+----+            inventory = response.json()
+----+            print(f"Current inventory has {len(inventory)} items:")
+----+            for item in inventory:
+----+                print(f"  - {item['name']}")
+----+        else:
+----+            print(f"❌ Failed to get inventory: {response.status_code}")
+----+            return
+----+    except Exception as e:
+----+        print(f"❌ Error getting inventory: {e}")
+----+        return
+----+    
+----+    # Test adding an item that matches inventory
+----+    if inventory:
+----+        existing_item = inventory[0]
+----+        shopping_item = {
+----+            "name": existing_item['name'],  # Exact match
+----+            "quantity": "2",
+----+            "unit": "pieces",
+----+            "priority": "must-buy"
+----+        }
+----+        
+----+        try:
+----+            response = requests.post(f"{BACKEND_URL}/shopping", json=shopping_item, timeout=10)
+----+            if response.status_code == 200:
+----+                data = response.json()
+----+                print(f"Added shopping item: {data['name']}")
+----+                print(f"Is duplicate: {data.get('is_duplicate', False)}")
+----+                print(f"Notes: {data.get('notes', 'None')}")
+----+                
+----+                if data.get('is_duplicate'):
+----+                    print("✅ Duplicate detection working")
+----+                else:
+----+                    print("❌ Duplicate detection failed")
+----+                
+----+                # Cleanup
+----+                try:
+----+                    requests.delete(f"{BACKEND_URL}/shopping/{data['id']}", timeout=5)
+----+                except:
+----+                    pass
+----+            else:
+----+                print(f"❌ Failed to add shopping item: {response.status_code}")
+----+        except Exception as e:
+----+            print(f"❌ Error adding shopping item: {e}")
+----+
+----+def test_barcode_invalid():
+----+    """Test barcode API with truly invalid barcode"""
+----+    print("\n=== Testing Barcode API with Invalid Barcode ===")
+----+    
+----+    invalid_barcodes = ["999999999999", "123456789012", "000000000000"]
+----+    
+----+    for barcode in invalid_barcodes:
+----+        try:
+----+            response = requests.get(f"{BACKEND_URL}/barcode/{barcode}", timeout=15)
+----+            if response.status_code == 200:
+----+                data = response.json()
+----+                print(f"Barcode {barcode}: found={data.get('found')}")
+----+                if data.get('found'):
+----+                    print(f"  Product: {data.get('product', {}).get('name', 'Unknown')}")
+----+            else:
+----+                print(f"❌ Barcode {barcode} failed: {response.status_code}")
+----+        except Exception as e:
+----+            print(f"❌ Error testing barcode {barcode}: {e}")
+----+
+----+if __name__ == "__main__":
+----+    test_dashboard_endpoints()
+----+    test_shopping_duplicate_detection()
+----+    test_barcode_invalid()
+----\ No newline at end of file
