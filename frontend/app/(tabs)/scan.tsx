@@ -15,7 +15,7 @@ import { CameraView, Camera } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import axios from 'axios';
-import { useInventory } from '../contexts/InventoryContext';
+import { useInventory } from '../../contexts/InventoryContext';
 import { BarCodeScanner } from 'expo-barcode-scanner';
 
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
