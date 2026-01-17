@@ -89,10 +89,10 @@ export default function LoadingScreen() {
           ]}
         >
           <View style={styles.outerCircleBorder} />
-          <View style={[styles.colorDot, { top: 0, left: '50%', backgroundColor: '#FF6B6B' }]} />
-          <View style={[styles.colorDot, { bottom: 0, left: '50%', backgroundColor: '#4ECDC4' }]} />
-          <View style={[styles.colorDot, { top: '50%', left: 0, backgroundColor: '#FFE66D' }]} />
-          <View style={[styles.colorDot, { top: '50%', right: 0, backgroundColor: '#95E1D3' }]} />
+          <View style={[styles.colorDot, { top: 0, left: '50%', marginLeft: -8, backgroundColor: '#FF6B6B' }]} />
+          <View style={[styles.colorDot, { bottom: 0, left: '50%', marginLeft: -8, backgroundColor: '#4ECDC4' }]} />
+          <View style={[styles.colorDot, { top: '50%', marginTop: -8, left: 0, backgroundColor: '#FFE66D' }]} />
+          <View style={[styles.colorDot, { top: '50%', marginTop: -8, right: 0, backgroundColor: '#95E1D3' }]} />
         </Animated.View>
 
         {/* Main icon container with gradient */}
