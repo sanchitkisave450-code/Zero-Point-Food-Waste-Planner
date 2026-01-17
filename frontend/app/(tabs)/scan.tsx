@@ -30,7 +30,7 @@ export default function ScanScreen() {
   const [loading, setLoading] = useState(false);
   const [scanMode, setScanMode] = useState<'barcode' | 'expiry'>('barcode');
   const [lastScannedCode, setLastScannedCode] = useState<string>('');
-  const scanTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const scanTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [pulseAnim] = useState(new Animated.Value(1));
 
   useEffect(() => {
