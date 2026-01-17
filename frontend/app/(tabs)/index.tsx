@@ -305,8 +305,7 @@ export default function HomeScreen() {
             </View>
             <Text style={styles.emptyTitle}>Start Your Journey</Text>
             <Text style={styles.emptySubtitle}>
-              Begin by scanning a product barcode{'
-'}or adding items manually
+              Begin by scanning a product barcode{'\n'}or adding items manually
             </Text>
             <TouchableOpacity
               style={styles.primaryButton}
