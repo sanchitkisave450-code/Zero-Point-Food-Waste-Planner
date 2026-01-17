@@ -10,16 +10,15 @@ export default function LoadingScreen() {
   const scaleAnim = useRef(new Animated.Value(0.3)).current;
   const rotateAnim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
+  const colorAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // Fade in animation
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 800,
       useNativeDriver: true,
     }).start();
 
-    // Scale up animation
     Animated.spring(scaleAnim, {
       toValue: 1,
       tension: 50,
@@ -27,7 +26,6 @@ export default function LoadingScreen() {
       useNativeDriver: true,
     }).start();
 
-    // Continuous rotation
     Animated.loop(
       Animated.timing(rotateAnim, {
         toValue: 1,
@@ -36,7 +34,6 @@ export default function LoadingScreen() {
       })
     ).start();
 
-    // Pulse animation
     Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, {
@@ -51,6 +48,14 @@ export default function LoadingScreen() {
         }),
       ])
     ).start();
+
+    Animated.loop(
+      Animated.timing(colorAnim, {
+        toValue: 1,
+        duration: 4000,
+        useNativeDriver: false,
+      })
+    ).start();
   }, []);
 
   const spin = rotateAnim.interpolate({
@@ -60,7 +65,7 @@ export default function LoadingScreen() {
 
   return (
     <LinearGradient
-      colors={['#34C759', '#30D158', '#32D74B']}
+      colors={['#667eea', '#764ba2', '#f093fb']}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={styles.container}
@@ -74,7 +79,7 @@ export default function LoadingScreen() {
           },
         ]}
       >
-        {/* Rotating outer circle */}
+        {/* Rotating outer circle with multiple colors */}
         <Animated.View
           style={[
             styles.outerCircle,
@@ -84,9 +89,13 @@ export default function LoadingScreen() {
           ]}
         >
           <View style={styles.outerCircleBorder} />
+          <View style={[styles.colorDot, { top: 0, left: '50%', backgroundColor: '#FF6B6B' }]} />
+          <View style={[styles.colorDot, { bottom: 0, left: '50%', backgroundColor: '#4ECDC4' }]} />
+          <View style={[styles.colorDot, { top: '50%', left: 0, backgroundColor: '#FFE66D' }]} />
+          <View style={[styles.colorDot, { top: '50%', right: 0, backgroundColor: '#95E1D3' }]} />
         </Animated.View>
 
-        {/* Main icon container */}
+        {/* Main icon container with gradient */}
         <Animated.View
           style={[
             styles.iconContainer,
@@ -95,9 +104,14 @@ export default function LoadingScreen() {
             },
           ]}
         >
-          <View style={styles.iconCircle}>
-            <Ionicons name="leaf" size={60} color="#34C759" />
-          </View>
+          <LinearGradient
+            colors={['#FF6B6B', '#FF8E53']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.iconCircle}
+          >
+            <Ionicons name="leaf" size={60} color="#FFFFFF" />
+          </LinearGradient>
         </Animated.View>
 
         {/* App name and tagline */}
@@ -112,11 +126,12 @@ export default function LoadingScreen() {
           <Text style={styles.appName}>Zero Waste</Text>
           <Text style={styles.tagline}>Food Planner</Text>
           
-          {/* Loading dots */}
+          {/* Colorful loading dots */}
           <View style={styles.dotsContainer}>
             <Animated.View
               style={[
                 styles.dot,
+                { backgroundColor: '#FF6B6B' },
                 {
                   transform: [
                     {
@@ -132,12 +147,13 @@ export default function LoadingScreen() {
             <Animated.View
               style={[
                 styles.dot,
+                { backgroundColor: '#4ECDC4' },
                 {
                   transform: [
                     {
                       scale: pulseAnim.interpolate({
                         inputRange: [1, 1.2],
-                        outputRange: [1, 1.5],
+                        outputRange: [1.2, 1.5],
                       }),
                     },
                   ],
@@ -147,6 +163,7 @@ export default function LoadingScreen() {
             <Animated.View
               style={[
                 styles.dot,
+                { backgroundColor: '#FFE66D' },
                 {
                   transform: [
                     {
@@ -175,12 +192,13 @@ export default function LoadingScreen() {
         </Animated.View>
       </Animated.View>
 
-      {/* Decorative elements */}
+      {/* Colorful decorative elements */}
       <Animated.View
         style={[
           styles.decorCircle1,
           {
-            opacity: 0.1,
+            opacity: 0.15,
+            backgroundColor: '#FFE66D',
             transform: [
               { rotate: spin },
               {
@@ -197,7 +215,8 @@ export default function LoadingScreen() {
         style={[
           styles.decorCircle2,
           {
-            opacity: 0.1,
+            opacity: 0.15,
+            backgroundColor: '#4ECDC4',
             transform: [
               {
                 rotate: spin.interpolate({
@@ -212,6 +231,15 @@ export default function LoadingScreen() {
                 }),
               },
             ],
+          },
+        ]}
+      />
+      <Animated.View
+        style={[
+          styles.decorCircle3,
+          {
+            opacity: 0.1,
+            backgroundColor: '#FF6B6B',
           },
         ]}
       />
@@ -231,18 +259,26 @@ const styles = StyleSheet.create({
   },
   outerCircle: {
     position: 'absolute',
-    width: 180,
-    height: 180,
+    width: 200,
+    height: 200,
     justifyContent: 'center',
     alignItems: 'center',
   },
   outerCircleBorder: {
     width: '100%',
     height: '100%',
-    borderRadius: 90,
+    borderRadius: 100,
     borderWidth: 3,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: 'rgba(255, 255, 255, 0.4)',
     borderStyle: 'dashed',
+  },
+  colorDot: {
+    position: 'absolute',
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    borderWidth: 3,
+    borderColor: '#FFF',
   },
   iconContainer: {
     marginBottom: 40,
@@ -251,7 +287,6 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
@@ -259,6 +294,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 20,
     elevation: 10,
+    borderWidth: 4,
+    borderColor: '#FFF',
   },
   textContainer: {
     alignItems: 'center',
@@ -270,7 +307,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     letterSpacing: 1,
     marginBottom: 4,
-    textShadowColor: 'rgba(0, 0, 0, 0.2)',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 4,
   },
@@ -278,7 +315,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '600',
     color: '#FFFFFF',
-    opacity: 0.9,
+    opacity: 0.95,
     marginBottom: 30,
   },
   dotsContainer: {
@@ -287,11 +324,11 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   dot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#FFFFFF',
-    opacity: 0.8,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: '#FFF',
   },
   bottomMessage: {
     position: 'absolute',
@@ -302,26 +339,34 @@ const styles = StyleSheet.create({
   messageText: {
     fontSize: 14,
     color: '#FFFFFF',
-    opacity: 0.8,
+    opacity: 0.9,
     textAlign: 'center',
     fontWeight: '500',
   },
   decorCircle1: {
     position: 'absolute',
-    top: 100,
-    left: -50,
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    backgroundColor: '#FFFFFF',
+    top: 80,
+    left: -60,
+    width: 220,
+    height: 220,
+    borderRadius: 110,
   },
   decorCircle2: {
     position: 'absolute',
-    bottom: 150,
-    right: -80,
-    width: 250,
-    height: 250,
-    borderRadius: 125,
-    backgroundColor: '#FFFFFF',
+    bottom: 120,
+    right: -90,
+    width: 280,
+    height: 280,
+    borderRadius: 140,
+  },
+  decorCircle3: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    width: 400,
+    height: 400,
+    borderRadius: 200,
+    marginLeft: -200,
+    marginTop: -200,
   },
 });
