@@ -186,7 +186,7 @@ export default function HomeScreen() {
           <Text style={styles.sectionTitle}>Quick Actions</Text>
           <View style={styles.quickActionsGrid}>
             <TouchableOpacity
-              style={[styles.actionCard, { backgroundColor: '#007AFF' }]}
+              style={[styles.actionCard, { backgroundColor: '#FF6B6B' }]}
               activeOpacity={0.8}
               onPress={() => router.push('/scan')}
             >
@@ -198,7 +198,7 @@ export default function HomeScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.actionCard, { backgroundColor: '#5856D6' }]}
+              style={[styles.actionCard, { backgroundColor: '#4ECDC4' }]}
               activeOpacity={0.8}
               onPress={() => router.push('/inventory')}
             >
@@ -210,27 +210,27 @@ export default function HomeScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.actionCard, { backgroundColor: '#FF9500' }]}
+              style={[styles.actionCard, { backgroundColor: '#FFE66D' }]}
               activeOpacity={0.8}
               onPress={() => router.push('/recipes')}
             >
               <View style={styles.actionIconContainer}>
-                <Ionicons name="restaurant" size={28} color="#FFFFFF" />
+                <Ionicons name="restaurant" size={28} color="#333333" />
               </View>
-              <Text style={styles.actionTitle}>Cook</Text>
-              <Text style={styles.actionSubtitle}>Recipes</Text>
+              <Text style={[styles.actionTitle, { color: '#333' }]}>Cook</Text>
+              <Text style={[styles.actionSubtitle, { color: '#666' }]}>Recipes</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.actionCard, { backgroundColor: '#FF2D55' }]}
+              style={[styles.actionCard, { backgroundColor: '#A8E6CF' }]}
               activeOpacity={0.8}
               onPress={() => router.push('/shopping')}
             >
               <View style={styles.actionIconContainer}>
-                <Ionicons name="cart" size={28} color="#FFFFFF" />
+                <Ionicons name="cart" size={28} color="#333333" />
               </View>
-              <Text style={styles.actionTitle}>Shop</Text>
-              <Text style={styles.actionSubtitle}>List</Text>
+              <Text style={[styles.actionTitle, { color: '#333' }]}>Shop</Text>
+              <Text style={[styles.actionSubtitle, { color: '#666' }]}>List</Text>
             </TouchableOpacity>
           </View>
         </View>
