@@ -259,14 +259,6 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.4)',
     borderStyle: 'dashed',
   },
-  colorDot: {
-    position: 'absolute',
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    borderWidth: 3,
-    borderColor: '#FFF',
-  },
   iconContainer: {
     marginBottom: 40,
   },
