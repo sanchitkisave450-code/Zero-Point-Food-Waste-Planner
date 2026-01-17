@@ -543,6 +543,8 @@ async def get_expiring_week():
         if days_to_expire is not None and 1 <= days_to_expire <= 7:
             item['days_to_expire'] = days_to_expire
             item['urgency'] = urgency
+            # Remove MongoDB _id field
+            item.pop('_id', None)
             expiring_week.append(item)
     
     return expiring_week
