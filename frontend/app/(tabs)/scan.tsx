@@ -243,7 +243,7 @@ export default function ScanScreen() {
   if (hasPermission === false) {
     return (
       <View style={styles.container}>
-        <Ionicons name="camera-off" size={60} color="#C7C7CC" />
+        <Ionicons name="camera-outline" size={60} color="#C7C7CC" />
         <Text style={styles.permissionText}>Camera permission required</Text>
         <TouchableOpacity style={styles.button} onPress={requestPermissions}>
           <Text style={styles.buttonText}>Grant Permission</Text>
