@@ -10,7 +10,6 @@ export default function LoadingScreen() {
   const scaleAnim = useRef(new Animated.Value(0.3)).current;
   const rotateAnim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
-  const colorAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -47,14 +46,6 @@ export default function LoadingScreen() {
           useNativeDriver: true,
         }),
       ])
-    ).start();
-
-    Animated.loop(
-      Animated.timing(colorAnim, {
-        toValue: 1,
-        duration: 4000,
-        useNativeDriver: false,
-      })
     ).start();
   }, []);
 
